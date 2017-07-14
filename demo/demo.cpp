@@ -19,7 +19,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
-
+#include <matio.h>
 
 using namespace DBoW2;
 using namespace DUtils;
@@ -29,10 +29,10 @@ using namespace std;
 
 void loadFeatures(vector<vector<vector<float> > > &features);
 void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
-  int L);
+                     int L);
 void testVocCreation(const vector<vector<vector<float> > > &features);
 void testDatabase(const vector<vector<vector<float> > > &features);
-
+void loadFeaturesFromMat(char* filename,vector<vector<vector<float> > > &features);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -46,161 +46,176 @@ const bool EXTENDED_SURF = false;
 
 void wait()
 {
-  cout << endl << "Press enter to continue" << endl;
-  getchar();
+    cout << endl << "Press enter to continue" << endl;
+    getchar();
 }
 
 // ----------------------------------------------------------------------------
 
 int main()
 {
-  vector<vector<vector<float> > > features;
-  loadFeatures(features);
+    vector<vector<vector<float> > > features;
+    //loadFeatures(features);
+    loadFeaturesFromMat("/home/develop/Work/Datasets/GardensPointWalking/day_left/GRP_AlexNetLandmarks/Image000.conv3.grp.fv.mat",features);
+    //testVocCreation(features);
 
-  testVocCreation(features);
+    //wait();
 
-  wait();
+    //testDatabase(features);
 
-  testDatabase(features);
-
-  return 0;
+    return 0;
 }
 
 // ----------------------------------------------------------------------------
 
 void loadFeatures(vector<vector<vector<float> > > &features)
 {
-  features.clear();
-  features.reserve(NIMAGES);
+    features.clear();
+    features.reserve(NIMAGES);
 
-  cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
+    cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
 
-  cout << "Extracting SURF features..." << endl;
-  for(int i = 0; i < NIMAGES; ++i)
-  {
-    stringstream ss;
-    ss << "images/image" << i << ".png";
+    cout << "Extracting SURF features..." << endl;
+    for(int i = 0; i < NIMAGES; ++i)
+    {
+        stringstream ss;
+        ss << "images/image" << i << ".png";
 
-    cv::Mat image = cv::imread(ss.str(), 0);
-    cv::Mat mask;
-    vector<cv::KeyPoint> keypoints;
-    vector<float> descriptors;
+        cv::Mat image = cv::imread(ss.str(), 0);
+        cv::Mat mask;
+        vector<cv::KeyPoint> keypoints;
+        vector<float> descriptors;
 
-    surf->detectAndCompute(image, mask, keypoints, descriptors);
+        surf->detectAndCompute(image, mask, keypoints, descriptors);
 
-    features.push_back(vector<vector<float> >());
-    changeStructure(descriptors, features.back(), surf->descriptorSize());
-  }
+        features.push_back(vector<vector<float> >());
+        changeStructure(descriptors, features.back(), surf->descriptorSize());
+    }
 }
 
 // ----------------------------------------------------------------------------
 
 void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
-  int L)
+                     int L)
 {
-  out.resize(plain.size() / L);
+    out.resize(plain.size() / L);
 
-  unsigned int j = 0;
-  for(unsigned int i = 0; i < plain.size(); i += L, ++j)
-  {
-    out[j].resize(L);
-    std::copy(plain.begin() + i, plain.begin() + i + L, out[j].begin());
-  }
+    unsigned int j = 0;
+    for(unsigned int i = 0; i < plain.size(); i += L, ++j)
+    {
+        out[j].resize(L);
+        std::copy(plain.begin() + i, plain.begin() + i + L, out[j].begin());
+    }
 }
 
 // ----------------------------------------------------------------------------
 
 void testVocCreation(const vector<vector<vector<float> > > &features)
 {
-  // branching factor and depth levels 
-  const int k = 9;
-  const int L = 3;
-  const WeightingType weight = TF_IDF;
-  const ScoringType score = L1_NORM;
+    // branching factor and depth levels
+    const int k = 9;
+    const int L = 3;
+    const WeightingType weight = TF_IDF;
+    const ScoringType score = L1_NORM;
 
-  Surf64Vocabulary voc(k, L, weight, score);
+    Surf64Vocabulary voc(k, L, weight, score);
 
-  cout << "Creating a small " << k << "^" << L << " vocabulary..." << endl;
-  voc.create(features);
-  cout << "... done!" << endl;
+    cout << "Creating a small " << k << "^" << L << " vocabulary..." << endl;
+    voc.create(features);
+    cout << "... done!" << endl;
 
-  cout << "Vocabulary information: " << endl
-  << voc << endl << endl;
+    cout << "Vocabulary information: " << endl
+         << voc << endl << endl;
 
-  // lets do something with this vocabulary
-  cout << "Matching images against themselves (0 low, 1 high): " << endl;
-  BowVector v1, v2;
-  for(int i = 0; i < NIMAGES; i++)
-  {
-    voc.transform(features[i], v1);
-    for(int j = 0; j < NIMAGES; j++)
+    // lets do something with this vocabulary
+    cout << "Matching images against themselves (0 low, 1 high): " << endl;
+    BowVector v1, v2;
+    for(int i = 0; i < NIMAGES; i++)
     {
-      voc.transform(features[j], v2);
-      
-      double score = voc.score(v1, v2);
-      cout << "Image " << i << " vs Image " << j << ": " << score << endl;
-    }
-  }
+        voc.transform(features[i], v1);
+        for(int j = 0; j < NIMAGES; j++)
+        {
+            voc.transform(features[j], v2);
 
-  // save the vocabulary to disk
-  cout << endl << "Saving vocabulary..." << endl;
-  voc.save("small_voc.yml.gz");
-  cout << "Done" << endl;
+            double score = voc.score(v1, v2);
+            cout << "Image " << i << " vs Image " << j << ": " << score << endl;
+        }
+    }
+
+    // save the vocabulary to disk
+    cout << endl << "Saving vocabulary..." << endl;
+    voc.save("small_voc.yml.gz");
+    cout << "Done" << endl;
 }
 
 // ----------------------------------------------------------------------------
 
 void testDatabase(const vector<vector<vector<float> > > &features)
 {
-  cout << "Creating a small database..." << endl;
+    cout << "Creating a small database..." << endl;
 
-  // load the vocabulary from disk
-  Surf64Vocabulary voc("small_voc.yml.gz");
-  
-  Surf64Database db(voc, false, 0); // false = do not use direct index
-  // (so ignore the last param)
-  // The direct index is useful if we want to retrieve the features that 
-  // belong to some vocabulary node.
-  // db creates a copy of the vocabulary, we may get rid of "voc" now
+    // load the vocabulary from disk
+    Surf64Vocabulary voc("small_voc.yml.gz");
 
-  // add images to the database
-  for(int i = 0; i < NIMAGES; i++)
-  {
-    db.add(features[i]);
-  }
+    Surf64Database db(voc, false, 0); // false = do not use direct index
+    // (so ignore the last param)
+    // The direct index is useful if we want to retrieve the features that
+    // belong to some vocabulary node.
+    // db creates a copy of the vocabulary, we may get rid of "voc" now
 
-  cout << "... done!" << endl;
+    // add images to the database
+    for(int i = 0; i < NIMAGES; i++)
+    {
+        db.add(features[i]);
+    }
 
-  cout << "Database information: " << endl << db << endl;
+    cout << "... done!" << endl;
 
-  // and query the database
-  cout << "Querying the database: " << endl;
+    cout << "Database information: " << endl << db << endl;
 
-  QueryResults ret;
-  for(int i = 0; i < NIMAGES; i++)
-  {
-    db.query(features[i], ret, 4);
+    // and query the database
+    cout << "Querying the database: " << endl;
 
-    // ret[0] is always the same image in this case, because we added it to the 
-    // database. ret[1] is the second best match.
+    QueryResults ret;
+    for(int i = 0; i < NIMAGES; i++)
+    {
+        db.query(features[i], ret, 4);
 
-    cout << "Searching for Image " << i << ". " << ret << endl;
-  }
+        // ret[0] is always the same image in this case, because we added it to the
+        // database. ret[1] is the second best match.
 
-  cout << endl;
+        cout << "Searching for Image " << i << ". " << ret << endl;
+    }
 
-  // we can save the database. The created file includes the vocabulary
-  // and the entries added
-  cout << "Saving database..." << endl;
-  db.save("small_db.yml.gz");
-  cout << "... done!" << endl;
-  
-  // once saved, we can load it again  
-  cout << "Retrieving database once again..." << endl;
-  Surf64Database db2("small_db.yml.gz");
-  cout << "... done! This is: " << endl << db2 << endl;
+    cout << endl;
+
+    // we can save the database. The created file includes the vocabulary
+    // and the entries added
+    cout << "Saving database..." << endl;
+    db.save("small_db.yml.gz");
+    cout << "... done!" << endl;
+
+    // once saved, we can load it again
+    cout << "Retrieving database once again..." << endl;
+    Surf64Database db2("small_db.yml.gz");
+    cout << "... done! This is: " << endl << db2 << endl;
 }
 
 // ----------------------------------------------------------------------------
+void loadFeaturesFromMat(char* filename,vector<vector<vector<float> > > &features)
+{
+    mat_t *mat = Mat_Open(filename,MAT_ACC_RDONLY);
+    if(mat){
+         matvar_t *matVar=0 ;
+        matVar = Mat_VarRead(mat,(char*)"fv");
+        if(matVar)
+        {
+            for(int i=0; i<matVar->rank; ++i)
+            {
+                std::cout<<"\tdim["<<i<<"] == "<<matVar->dims[i]<<"\n" ;
+            }
+        }
+    }
 
+}
 
