@@ -68,6 +68,7 @@ namespace DBoW2
 #include "FSurf64.h"
 #include "FBrief.h"
 #include "FORB.h"
+#include "FCNN.h"
 
 /// SURF64 Vocabulary
 typedef DBoW2::TemplatedVocabulary<DBoW2::FSurf64::TDescriptor, DBoW2::FSurf64> 
@@ -84,6 +85,14 @@ typedef DBoW2::TemplatedVocabulary<DBoW2::FBrief::TDescriptor, DBoW2::FBrief>
 /// BRIEF Database
 typedef DBoW2::TemplatedDatabase<DBoW2::FBrief::TDescriptor, DBoW2::FBrief> 
   BriefDatabase;
+
+/// CNN Vocabulary
+typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
+  CnnVocabulary;
+
+/// CNN Database
+typedef DBoW2::TemplatedDatabase<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
+  CnnDatabase;
 
 #endif
 
