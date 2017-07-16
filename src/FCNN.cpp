@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include<iostream>
 #include "FClass.h"
 #include "FCNN.h"
 
@@ -43,7 +44,7 @@ double FCNN::distance(const FCNN::TDescriptor &a, const FCNN::TDescriptor &b)
     l2_norm_a += (a[i]*a[i]);
     l2_norm_b += (b[i]*b[i]);
   }
-  double norm_dot_prod = dot_prod / (sqrt(l2_norm_a)*(sqrt(l2_norm_b));
+  double norm_dot_prod = dot_prod / (sqrt(l2_norm_a)*(sqrt(l2_norm_b)));
   cosine_dist = 1 - norm_dot_prod;
   return cosine_dist;
 }
