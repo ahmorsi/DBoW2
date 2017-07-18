@@ -56,8 +56,8 @@ void wait()
 
 int main()
 {
-    string ref_basedir = "/home/ahmed/Work/MSc/Thesis/Dataset/GRP_AlexnetLandmarks/day_left/GRP_AlexNetLandmarks";
-    string query_basedir = "/home/ahmed/Work/MSc/Thesis/Dataset/GRP_AlexnetLandmarks/night_right/GRP_AlexNetLandmarks";
+    string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/GRP_AlexNetLandmarks";
+    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/GRP_AlexNetLandmarks";
 
     vector<vector<vector<float> > > ref_features,query_features;
     loadFeatures(ref_basedir,ref_features);
@@ -71,9 +71,9 @@ int main()
     //testDatabase(features,voc);
     //queryDatabase(query_features,db);
     ofstream query_results_ostream;
-    query_results_ostream.open("DBOW_Gardens_dayleft_nightright_K9L3.txt");
+    //query_results_ostream.open("DBOW_Gardens_dayleft_dayright_K9L5.txt");
     queryDatabase(query_features,db,query_results_ostream);
-    query_results_ostream.close();
+    //query_results_ostream.close();
     return 0;
 }
 
@@ -180,9 +180,9 @@ CnnVocabulary testVocCreation(const vector<vector<vector<float> > > &features)
 {
     // branching factor and depth levels
     const int k = 9;
-    const int L = 3;
+    const int L = 7;
     const WeightingType weight = TF_IDF;
-    const ScoringType score = DOT_PRODUCT;//L2_NORM;//L1_NORM;
+    const ScoringType score = L2_NORM;//L1_NORM;
 
     CnnVocabulary voc(k, L, weight, score);
 
@@ -329,20 +329,37 @@ void buildDatabase(const vector<vector<vector<float> > > &features,CnnDatabase &
 void queryDatabase(const vector<vector<vector<float> > > &features,CnnDatabase &db,ofstream &out)
 {
     cout << "Querying the database: " << endl;
-
+    int rangeSz = 5;
     QueryResults ret;
+    int tp = 0,fp=0,fn = 0;
     for(int i = 0; i < NIMAGES; i++)
     {
-        db.query(features[i], ret, 4);
+        db.query(features[i], ret, 5);
 
         // ret[0] is always the same image in this case, because we added it to the
         // database. ret[1] is the second best match.
 
         cout << "Searching for Image " << i << ". " << ret << endl;
-        out << "Searching for Image " << i << ". " << ret << endl;
+        //out << "Searching for Image " << i << ". " << ret << endl;
+        bool found = false;
+        for(int n=0;n<ret.size();++n)
+        {
+            int entID = ret[n].Id;
+            if(i -rangeSz <= entID && entID <= i+rangeSz){
+                 ++ tp;
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            ++ fp;
+            ++ fn;
+        }
     }
 
     cout << endl;
+    cout<<"============================\n";
+    cout<<"Percision: "<<tp*100.0 / (fp + tp)<<endl;
 }
 
 

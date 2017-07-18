@@ -70,9 +70,11 @@ endif(BUILD_DBoW2)
 
 if(BUILD_Demo)
   add_executable(demo demo/demo.cpp)
+  add_executable(demo_org demo/demo_org.cpp)
   include_directories("/usr/local/include")
   link_directories(/usr/local/lib)	
   target_link_libraries(demo ${PROJECT_NAME} ${OpenCV_LIBS} ${DLib_LIBS} -lmatio)
+  target_link_libraries(demo_org ${PROJECT_NAME} ${OpenCV_LIBS} ${DLib_LIBS})
   file(COPY demo/images DESTINATION ${CMAKE_BINARY_DIR}/)
 endif(BUILD_Demo)
 
