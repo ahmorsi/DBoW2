@@ -9,11 +9,11 @@ class FCNN : protected FClass
 {
 public:
     /// Descriptor type
-    typedef std::vector<float> TDescriptor;
+    typedef std::vector<double> TDescriptor;
     /// Pointer to a single descriptor
     typedef const TDescriptor *pDescriptor;
     /// Descriptor length
-    static const int L = 4096;
+    static const int L = 512;//4096;
 
     /**
      * Returns the number of dimensions of the descriptor space

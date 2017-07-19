@@ -28,14 +28,14 @@ using namespace std;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-void loadFeatures(string basedir,vector<vector<vector<float> > > &features);
-void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
+void loadFeatures(string basedir,vector<vector<vector<double> > > &features);
+void changeStructure(const vector<double> &plain, vector<vector<double> > &out,
                      int L);
-CnnVocabulary testVocCreation(const vector<vector<vector<float> > > &features);
-void testDatabase(const vector<vector<vector<float> > > &features,CnnVocabulary voc);
-void loadFeaturesFromMat(string filename,vector<vector<float> > &features);
-void buildDatabase(const vector<vector<vector<float> > > &features,CnnDatabase &db);
-void queryDatabase(const vector<vector<vector<float> > > &features,CnnDatabase& db,ofstream &out);
+CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features);
+void testDatabase(const vector<vector<vector<double> > > &features,CnnVocabulary voc);
+void loadFeaturesFromMat(string filename,vector<vector<double> > &features);
+void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db);
+void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase& db,ofstream &out);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 // number of training images
@@ -56,10 +56,10 @@ void wait()
 
 int main()
 {
-    string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/GRP_AlexNetLandmarks";
-    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/GRP_AlexNetLandmarks";
+    string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
+    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv5_1";
 
-    vector<vector<vector<float> > > ref_features,query_features;
+    vector<vector<vector<double> > > ref_features,query_features;
     loadFeatures(ref_basedir,ref_features);
     loadFeatures(query_basedir,query_features);
 
@@ -78,7 +78,7 @@ int main()
 }
 
 // ----------------------------------------------------------------------------
-void loadFeatures(string basedir,vector<vector<vector<float> > > &features)
+void loadFeatures(string basedir,vector<vector<vector<double> > > &features)
 {
     features.clear();
     features.reserve(NIMAGES);
@@ -90,41 +90,18 @@ void loadFeatures(string basedir,vector<vector<vector<float> > > &features)
     {
         stringstream ss;
         sprintf( img_name, "Image%03d", i );
-        ss << basedir<< "/" << img_name << ".conv3.grp.fv.mat";
+        //ss << basedir<< "/" << img_name << ".conv3.grp.fv.mat";
+        ss << basedir<< "/" << img_name << ".conv5.fv.mat";
         cout<<ss.str()<<endl;
-        vector<vector<float> > fv;
+        vector<vector<double> > fv;
         loadFeaturesFromMat(ss.str(),fv);
         features.push_back(fv);
     }
 }
-//void loadFeatures(vector<vector<vector<float> > > &features)
-//{
-//    features.clear();
-//    features.reserve(NIMAGES);
-
-//    cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
-
-//    cout << "Extracting SURF features..." << endl;
-//    for(int i = 0; i < NIMAGES; ++i)
-//    {
-//        stringstream ss;
-//        ss << "images/image" << i << ".png";
-
-//        cv::Mat image = cv::imread(ss.str(), 0);
-//        cv::Mat mask;
-//        vector<cv::KeyPoint> keypoints;
-//        vector<float> descriptors;
-
-//        surf->detectAndCompute(image, mask, keypoints, descriptors);
-
-//        features.push_back(vector<vector<float> >());
-//        changeStructure(descriptors, features.back(), surf->descriptorSize());
-//    }
-//}
 
 // ----------------------------------------------------------------------------
 
-void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
+void changeStructure(const vector<double> &plain, vector<vector<double> > &out,
                      int L)
 {
     out.resize(plain.size() / L);
@@ -138,51 +115,13 @@ void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
 }
 
 // ----------------------------------------------------------------------------
-
-//void testVocCreation(const vector<vector<vector<float> > > &features)
-//{
-//    // branching factor and depth levels
-//    const int k = 9;
-//    const int L = 3;
-//    const WeightingType weight = TF_IDF;
-//    const ScoringType score = L1_NORM;
-
-//    Surf64Vocabulary voc(k, L, weight, score);
-
-//    cout << "Creating a small " << k << "^" << L << " vocabulary..." << endl;
-//    voc.create(features);
-//    cout << "... done!" << endl;
-
-//    cout << "Vocabulary information: " << endl
-//         << voc << endl << endl;
-
-//    // lets do something with this vocabulary
-//    cout << "Matching images against themselves (0 low, 1 high): " << endl;
-//    BowVector v1, v2;
-//    for(int i = 0; i < NIMAGES; i++)
-//    {
-//        voc.transform(features[i], v1);
-//        for(int j = 0; j < NIMAGES; j++)
-//        {
-//            voc.transform(features[j], v2);
-
-//            double score = voc.score(v1, v2);
-//            cout << "Image " << i << " vs Image " << j << ": " << score << endl;
-//        }
-//    }
-
-//    // save the vocabulary to disk
-//    cout << endl << "Saving vocabulary..." << endl;
-//    voc.save("small_voc.yml.gz");
-//    cout << "Done" << endl;
-//}
-CnnVocabulary testVocCreation(const vector<vector<vector<float> > > &features)
+CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features)
 {
     // branching factor and depth levels
-    const int k = 9;
-    const int L = 7;
+    const int k = 10;
+    const int L = 5;
     const WeightingType weight = TF_IDF;
-    const ScoringType score = L2_NORM;//L1_NORM;
+    const ScoringType score = L2_NORM;
 
     CnnVocabulary voc(k, L, weight, score);
 
@@ -211,12 +150,12 @@ CnnVocabulary testVocCreation(const vector<vector<vector<float> > > &features)
     // save the vocabulary to disk
     //cout << endl << "Saving vocabulary..." << endl;
     //voc.save("small_cnn_voc.yml.gz");
-    cout << "Done" << endl;
+    //cout << "Done" << endl;
     return voc;
 }
 // ----------------------------------------------------------------------------
 
-void testDatabase(const vector<vector<vector<float> > > &features,CnnVocabulary voc)
+void testDatabase(const vector<vector<vector<double> > > &features,CnnVocabulary voc)
 {
     cout << "Creating a small database..." << endl;
 
@@ -270,7 +209,7 @@ void testDatabase(const vector<vector<vector<float> > > &features,CnnVocabulary 
 }
 
 // ----------------------------------------------------------------------------
-void loadFeaturesFromMat(string filename,vector<vector<float> > &features)
+void loadFeaturesFromMat(string filename,vector<vector<double> > &features)
 {
     mat_t *mat = Mat_Open(filename.c_str(),MAT_ACC_RDONLY);
     if(mat){
@@ -279,22 +218,35 @@ void loadFeaturesFromMat(string filename,vector<vector<float> > &features)
 
         if(matVar)
         {
-            //unsigned xSize = matVar->nbytes/matVar->data_size ;
+            unsigned xSize = matVar->nbytes/matVar->data_size ;
+//            cout<<xSize<<endl;
             const double *xData = static_cast<const double*>(matVar->data) ;
             int height = matVar->dims[0];
             int width = matVar->dims[1];
             int idx = 0;
             cout<<height << " " << width<<endl;
-            for(int i=0;i< height; ++i){
-                    idx = i*width;
-                    const double* arr = xData + idx;
-                    vector<float> fv(arr,arr + width);
+//            for(int i=0;i< height; ++i){
+//                    idx = i*width;
+//                    const double* arr = xData + idx;
+//                    //cout<<"Vector of row no. "<<idx<<endl;
+//                    //cout<<idx<<' '<<idx + width<< ' '<<xSize<<endl;
+//                    vector<double> fv;
+//                    for(int j=idx;j<idx+width;++j){
+//                        //cout<<xData[j]<<endl;
+//                        fv.push_back((double)xData[j]);
+//                    }
+//                    features.push_back(fv);
+//                }
+            vector<double> fv;
+            for(int i=0; i<xSize; ++i)
+            {
+                //std::cout<<"\tx["<<i<<"] = "<<xData[i]<<"\n" ;
+                fv.push_back(xData[i]);
+                if(fv.size() == width){
                     features.push_back(fv);
+                    fv.clear();
+                }
             }
-//            for(int i=0; i<xSize; ++i)
-//            {
-//                std::cout<<"\tx["<<i<<"] = "<<xData[i]<<"\n" ;
-//            }
 
 //            for(int i=0; i<matVar->rank; ++i)
 //            {
@@ -305,7 +257,7 @@ void loadFeaturesFromMat(string filename,vector<vector<float> > &features)
 
 }
 //-------------------------------------------------------------------------------
-void buildDatabase(const vector<vector<vector<float> > > &features,CnnDatabase &db)
+void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db)
 {
     cout << "Creating a database..." << endl;
 
@@ -326,7 +278,7 @@ void buildDatabase(const vector<vector<vector<float> > > &features,CnnDatabase &
     cout << "Database information: " << endl << db << endl;
 }
 //-------------------------------------------------------------------------------
-void queryDatabase(const vector<vector<vector<float> > > &features,CnnDatabase &db,ofstream &out)
+void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db,ofstream &out)
 {
     cout << "Querying the database: " << endl;
     int rangeSz = 5;
