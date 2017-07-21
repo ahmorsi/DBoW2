@@ -57,27 +57,27 @@ void wait()
 
 int main()
 {
-    const string vocFile = "vprice_cnn_voc_K10L4.txt";
-    buildVoc(vocFile);
-    //    string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
-//    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/Vgg_LCF_conv5_1";
+    const string vocFile = "//home//develop//Work//Source_Code//DBoW2//vprice_cnn_voc_K10L4.txt";
+    //buildVoc(vocFile);
+        string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
+    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv5_1";
 
-//    int n_ref_imgs = 200,n_query_imgs = 200;
+    int n_ref_imgs = 200,n_query_imgs = 200;
 
-//    vector<vector<vector<double> > > ref_features,query_features,features;
-//    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
-//    loadFeatures(query_basedir,query_features,n_query_imgs);
+    vector<vector<vector<double> > > ref_features,query_features,features;
+    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
+    loadFeatures(query_basedir,query_features,n_query_imgs);
 
-//    CnnVocabulary voc;
-//    cout<<"Loading Vocabulary ...\n";
-//    voc.loadFromTextFile("/home/develop/Work/Source_Code/DBoW2/vprice_cnn_voc_K10L4.txt");
-//    cout<<"Voc Info:\n";
-//    cout<<voc<<endl;
-//    wait();
-//    CnnDatabase db(voc, false, 0);
-//    buildDatabase(ref_features,db);
-//    ofstream query_results_ostream;
-//    queryDatabase(query_features,db,query_results_ostream);
+    CnnVocabulary voc;
+    cout<<"Loading Vocabulary ...\n";
+    voc.loadFromTextFile(vocFile);
+    cout<<"Voc Info:\n";
+    cout<<voc<<endl;
+    wait();
+    CnnDatabase db(voc, false, 0);
+    buildDatabase(ref_features,db);
+    ofstream query_results_ostream;
+    queryDatabase(query_features,db,query_results_ostream);
     //query_results_ostream.close();
     return 0;
 }
@@ -94,14 +94,15 @@ void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int 
     for(int i = 0; i < NIMAGES; ++i)
     {
         stringstream ss;
-        //sprintf( img_name, "Image%03d", i );
-        sprintf( img_name, "image-%05d", i );
+        sprintf( img_name, "Image%03d", i );
+        //sprintf( img_name, "image-%05d", i );
         //ss << basedir<< "/" << img_name << ".conv3.grp.fv.mat";
         ss << basedir<< "/" << img_name << ".conv5.fv.mat";
         cout<<ss.str()<<endl;
         vector<vector<double> > fv;
         loadFeaturesFromMat(ss.str(),fv);
-        features.push_back(fv);
+        if (fv.size() > 0)
+            features.push_back(fv);
     }
 }
 
@@ -261,7 +262,7 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features)
 //            }
         }
     }
-
+    Mat_Close(mat);
 }
 //-------------------------------------------------------------------------------
 void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db)

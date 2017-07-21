@@ -1338,7 +1338,7 @@ template<class TDescriptor, class F>
 bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &filename)
 {
     ifstream f;
-    f.open(filename);
+    f.open(filename.c_str());
 	
     if(f.eof())
 	return false;
@@ -1429,9 +1429,9 @@ template<class TDescriptor, class F>
 void TemplatedVocabulary<TDescriptor,F>::saveToTextFile(const std::string &filename) const
 {
     ofstream f;
-    f.open(filename);
+    f.open(filename.c_str());
     if(!f.is_open())
-        std::cout<<"Cannot open: "<<filename<<std::endl;
+        std::cout<<"Cannot open: "<<filename.c_str()<<std::endl;
     f << m_k << " " << m_L << " " << " " << m_scoring << " " << m_weighting << endl;
 
     for(size_t i=1; i<m_nodes.size();i++)
