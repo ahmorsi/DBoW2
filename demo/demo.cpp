@@ -57,28 +57,28 @@ void wait()
 
 int main()
 {
-    const string vocFile = "//home//develop//Work//Source_Code//DBoW2//vprice_cnn_voc_K10L4.txt";
-    //buildVoc(vocFile);
-        string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
-    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv5_1";
+    const string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_cnn_conv3_voc_K10L6.txt";
+    buildVoc(vocFile);
+//        string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
+//    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/Vgg_LCF_conv5_1";
 
-    int n_ref_imgs = 200,n_query_imgs = 200;
+//    int n_ref_imgs = 200,n_query_imgs = 200;
 
-    vector<vector<vector<double> > > ref_features,query_features,features;
-    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
-    loadFeatures(query_basedir,query_features,n_query_imgs);
+//    vector<vector<vector<double> > > ref_features,query_features,features;
+//    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
+//    loadFeatures(query_basedir,query_features,n_query_imgs);
 
-    CnnVocabulary voc;
-    cout<<"Loading Vocabulary ...\n";
-    voc.loadFromTextFile(vocFile);
-    cout<<"Voc Info:\n";
-    cout<<voc<<endl;
-    wait();
-    CnnDatabase db(voc, false, 0);
-    buildDatabase(ref_features,db);
-    ofstream query_results_ostream;
-    queryDatabase(query_features,db,query_results_ostream);
-    //query_results_ostream.close();
+//    CnnVocabulary voc;
+//    cout<<"Loading Vocabulary ...\n";
+//  voc.loadFromTextFile(vocFile);
+//    cout<<"Voc Info:\n";
+//    cout<<voc<<endl;
+//    wait();
+//    CnnDatabase db(voc, false, 0);
+//    buildDatabase(ref_features,db);
+//    ofstream query_results_ostream;
+//    queryDatabase(query_features,db,query_results_ostream);
+//    //query_results_ostream.close();
     return 0;
 }
 
@@ -86,21 +86,25 @@ int main()
 void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int NIMAGES)
 {
     features.clear();
-    features.reserve(NIMAGES);
+
 
     //cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
-    char img_name[100];
+    //char img_name[100];
     cout << "Extracting CNN features..." << endl;
-    for(int i = 0; i < NIMAGES; ++i)
+    std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(basedir.c_str(),".fv.mat");
+    string path = "";
+    features.reserve(feat_files.size());
+    for(int i = 0; i < feat_files.size(); ++i)
     {
+        path = feat_files[i];
         stringstream ss;
-        sprintf( img_name, "Image%03d", i );
+        //sprintf( img_name, "Image%03d", i );
         //sprintf( img_name, "image-%05d", i );
         //ss << basedir<< "/" << img_name << ".conv3.grp.fv.mat";
-        ss << basedir<< "/" << img_name << ".conv5.fv.mat";
-        cout<<ss.str()<<endl;
+        //ss << basedir<< "/" << img_name << ".conv5.fv.mat";
+        cout<<path<<endl;
         vector<vector<double> > fv;
-        loadFeaturesFromMat(ss.str(),fv);
+        loadFeaturesFromMat(path.c_str(),fv);
         if (fv.size() > 0)
             features.push_back(fv);
     }
@@ -126,7 +130,7 @@ CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features,c
 {
     // branching factor and depth levels
     const int k = 10;
-    const int L = 4;
+    const int L = 6;
     const WeightingType weight = TF_IDF;
     const ScoringType score = L2_NORM;
 
@@ -155,7 +159,7 @@ CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features,c
 //    }
 
     // save the vocabulary to disk
-    cout << endl << "Saving vocabulary..." << endl;
+    cout << endl << "Saving vocabulary in " << vocfilename<< endl;
     voc.saveToTextFile(vocfilename);
     cout << "Done" << endl;
     return voc;
@@ -327,13 +331,15 @@ void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase 
 //------------------------------------------------------------------------------
 void buildVoc(const string vocFile)
 {
-    string ref_basedir = "/home/develop/Work/Datasets/vprice_live_vggfeatures";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
-    string query_basedir = "/home/develop/Work/Datasets/vprice_memory_vggfeatures";
+    string ref_basedir = "/home/develop/Work/Datasets/indoor/library/Vgg_LCF_conv3_pool";//"/home/develop/Work/Datasets/vprice_live_vggfeatures";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
+    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";//"/home/develop/Work/Datasets/vprice_memory_vggfeatures";
 
     int n_ref_imgs = 4022,n_query_imgs = 3756;
-
     vector<vector<vector<double> > > ref_features,query_features,features;
-    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
+    loadFeatures("/home/develop/Work/Datasets/indoor/library/Vgg_LCF_conv3_pool",ref_features,n_ref_imgs);
+    features.insert(features.end(),ref_features.begin(),ref_features.end());
+    loadFeatures("/home/develop/Work/Datasets/indoor/bookstore/Vgg_LCF_conv3_pool",ref_features,n_ref_imgs);
+    features.insert(features.end(),ref_features.begin(),ref_features.end());
     //loadFeatures(query_basedir,query_features,n_query_imgs);
     //features = ref_features;
     //features.insert(features.end(),query_features.begin(),query_features.end());
@@ -343,5 +349,13 @@ void buildVoc(const string vocFile)
     //cout<<ref_features.size()<<' ' << ref_features[0].size()<<endl;
     //cout<<query_features.size()<<' ' << query_features[0].size()<<endl;
     //cout<<features.size()<<' ' << features[0].size()<<endl;
-    CnnVocabulary voc = testVocCreation(ref_features,vocFile);
+
+//    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv3_3",ref_features,100);
+//    features.insert(features.end(),ref_features.begin(),ref_features.end());
+//    //loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/day_right/Vgg_LCF_conv3_3",ref_features,200);
+//    //features.insert(features.end(),ref_features.begin(),ref_features.end());
+//    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv3_3",ref_features,100);
+//    features.insert(features.end(),ref_features.begin(),ref_features.end());
+   cout<<features.size()<<endl;
+    CnnVocabulary voc = testVocCreation(features,vocFile);
 }

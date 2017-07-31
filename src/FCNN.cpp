@@ -35,18 +35,24 @@ void FCNN::meanValue(const std::vector<FCNN::pDescriptor> &descriptors,
 
 double FCNN::distance(const FCNN::TDescriptor &a, const FCNN::TDescriptor &b)
 {
-  double cosine_dist = 0.;
-  double dot_prod = 0.;
-  double l2_norm_a = 0.,l2_norm_b = 0.;
-  for(int i = 0; i < FCNN::L; ++i)
-  {
-    dot_prod += a[i]*b[i];
-    l2_norm_a += (a[i]*a[i]);
-    l2_norm_b += (b[i]*b[i]);
-  }
-  double norm_dot_prod = dot_prod / (sqrt(l2_norm_a)*(sqrt(l2_norm_b)));
-  cosine_dist = 1 - norm_dot_prod;
-  return cosine_dist;
+//  double cosine_dist = 0.;
+//  double dot_prod = 0.;
+//  double l2_norm_a = 0.,l2_norm_b = 0.;
+//  for(int i = 0; i < FCNN::L; ++i)
+//  {
+//    dot_prod += a[i]*b[i];
+//    l2_norm_a += (a[i]*a[i]);
+//    l2_norm_b += (b[i]*b[i]);
+//  }
+//  double norm_dot_prod = dot_prod / (sqrt(l2_norm_a)*(sqrt(l2_norm_b)));
+//  cosine_dist = 1 - norm_dot_prod;
+//  return cosine_dist;
+    double sqd = 0;
+    for(int i = 0; i < FCNN::L; ++i)
+    {
+        sqd += ((a[i]-b[i])*(a[i]-b[i]));
+    }
+    return std::sqrt(sqd);
 }
 
 // --------------------------------------------------------------------------
@@ -88,12 +94,12 @@ void FCNN::toMat32F(const std::vector<TDescriptor> &descriptors,
   const int N = descriptors.size();
   const int L = FCNN::L;
 
-  mat.create(N, L, CV_32F);
+  mat.create(N, L, CV_64F);
 
   for(int i = 0; i < N; ++i)
   {
     const TDescriptor& desc = descriptors[i];
-    float *p = mat.ptr<float>(i);
+    double *p = mat.ptr<double>(i);
     for(int j = 0; j < L; ++j, ++p)
     {
       *p = desc[j];
