@@ -94,5 +94,13 @@ typedef DBoW2::TemplatedVocabulary<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
 typedef DBoW2::TemplatedDatabase<DBoW2::FCNN::TDescriptor, DBoW2::FCNN>
   CnnDatabase;
 
+/// ORB Vocabulary
+typedef DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>
+  OrbVocabulary;
+
+/// ORB Database
+typedef DBoW2::TemplatedDatabase<DBoW2::FORB::TDescriptor, DBoW2::FORB>
+  OrbDatabase;
+
 #endif
 

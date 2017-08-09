@@ -25,10 +25,10 @@ set(HDRS
   include/DBoW2/BowVector.h           include/DBoW2/FBrief.h              include/DBoW2/FSurf64.h include/DBoW2/FCNN.h
   include/DBoW2/QueryResults.h        include/DBoW2/TemplatedDatabase.h   include/DBoW2/FORB.h
   include/DBoW2/DBoW2.h               include/DBoW2/FClass.h              include/DBoW2/FeatureVector.h
-  include/DBoW2/ScoringObject.h       include/DBoW2/TemplatedVocabulary.h)
+  include/DBoW2/ScoringObject.h       include/DBoW2/TemplatedVocabulary.h include/DBoW2/ORBextractor.h)
 set(SRCS 
   src/BowVector.cpp     src/FBrief.cpp        src/FSurf64.cpp       src/FORB.cpp src/FCNN.cpp
-  src/FeatureVector.cpp src/QueryResults.cpp  src/ScoringObject.cpp)
+  src/FeatureVector.cpp src/QueryResults.cpp  src/ScoringObject.cpp src/ORBextractor.cc)
 
 set(DEPENDENCY_DIR ${CMAKE_CURRENT_BINARY_DIR}/dependencies)
 set(DEPENDENCY_INSTALL_DIR ${DEPENDENCY_DIR}/install)
@@ -70,11 +70,13 @@ endif(BUILD_DBoW2)
 
 if(BUILD_Demo)
   add_executable(demo demo/demo.cpp)
-  add_executable(demo_org demo/demo_org.cpp)
+  add_executable(demo_surf demo/demo_surf.cpp)
+  add_executable(demo_orb demo/demo_orb.cpp)
   include_directories("/usr/local/include")
   link_directories(/usr/local/lib)	
   target_link_libraries(demo ${PROJECT_NAME} ${OpenCV_LIBS} ${DLib_LIBS} -lmatio)
-  target_link_libraries(demo_org ${PROJECT_NAME} ${OpenCV_LIBS} ${DLib_LIBS})
+  target_link_libraries(demo_surf ${PROJECT_NAME} ${OpenCV_LIBS} ${DLib_LIBS})
+  target_link_libraries(demo_orb ${PROJECT_NAME} ${OpenCV_LIBS} ${DLib_LIBS})
   file(COPY demo/images DESTINATION ${CMAKE_BINARY_DIR}/)
 endif(BUILD_Demo)
 

@@ -18,7 +18,7 @@ void FCNN::meanValue(const std::vector<FCNN::pDescriptor> &descriptors,
   mean.resize(0);
   mean.resize(FCNN::L, 0);
 
-  float s = descriptors.size();
+  double s = descriptors.size();
 
   vector<FCNN::pDescriptor>::const_iterator it;
   for(it = descriptors.begin(); it != descriptors.end(); ++it)
@@ -29,6 +29,7 @@ void FCNN::meanValue(const std::vector<FCNN::pDescriptor> &descriptors,
       mean[i] += desc[i] / s;
     }
   }
+
 }
 
 // --------------------------------------------------------------------------
@@ -44,7 +45,7 @@ double FCNN::distance(const FCNN::TDescriptor &a, const FCNN::TDescriptor &b)
 //    l2_norm_a += (a[i]*a[i]);
 //    l2_norm_b += (b[i]*b[i]);
 //  }
-//  double norm_dot_prod = dot_prod / (sqrt(l2_norm_a)*(sqrt(l2_norm_b)));
+//  double norm_dot_prod = dot_prod / ((sqrt(l2_norm_a)*sqrt(l2_norm_b)));
 //  cosine_dist = 1 - norm_dot_prod;
 //  return cosine_dist;
     double sqd = 0;
@@ -52,7 +53,7 @@ double FCNN::distance(const FCNN::TDescriptor &a, const FCNN::TDescriptor &b)
     {
         sqd += ((a[i]-b[i])*(a[i]-b[i]));
     }
-    return std::sqrt(sqd);
+    return sqd;
 }
 
 // --------------------------------------------------------------------------

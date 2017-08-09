@@ -31,11 +31,12 @@ using namespace std;
 void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int NIMAGES);
 void changeStructure(const vector<double> &plain, vector<vector<double> > &out,
                      int L);
-CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features,const string vocfilename);
+CnnVocabulary createVocab(const vector<vector<vector<double> > > &features,const string vocfilename,bool save_file=true);
 void testDatabase(const vector<vector<vector<double> > > &features,CnnVocabulary voc);
 void loadFeaturesFromMat(string filename,vector<vector<double> > &features);
 void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db);
 void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase& db,ofstream &out);
+void queryDatabase(string query_basedir,CnnDatabase& db);
 void buildVoc(const string vocfilename);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -57,28 +58,29 @@ void wait()
 
 int main()
 {
-    const string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_cnn_conv3_voc_K10L6.txt";
-    buildVoc(vocFile);
-//        string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
-//    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/Vgg_LCF_conv5_1";
+    const string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
+    //buildVoc(vocFile);
 
-//    int n_ref_imgs = 200,n_query_imgs = 200;
+        string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/densenet_LCF_concatenate_32";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
+    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/densenet_LCF_concatenate_32";
 
-//    vector<vector<vector<double> > > ref_features,query_features,features;
-//    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
-//    loadFeatures(query_basedir,query_features,n_query_imgs);
+    int n_ref_imgs = 200,n_query_imgs = 200;
 
-//    CnnVocabulary voc;
-//    cout<<"Loading Vocabulary ...\n";
-//  voc.loadFromTextFile(vocFile);
-//    cout<<"Voc Info:\n";
-//    cout<<voc<<endl;
-//    wait();
-//    CnnDatabase db(voc, false, 0);
-//    buildDatabase(ref_features,db);
-//    ofstream query_results_ostream;
-//    queryDatabase(query_features,db,query_results_ostream);
-//    //query_results_ostream.close();
+    vector<vector<vector<double> > > ref_features,query_features,features;
+    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
+
+
+    //CnnVocabulary voc;
+    //cout<<"Loading Vocabulary ...\n";
+    CnnVocabulary voc = createVocab(ref_features,vocFile,false);
+    //voc.loadFromTextFile(vocFile);
+    //cout<<"Voc Info:\n";
+    //cout<<voc<<endl;
+    wait();
+    CnnDatabase db(voc, false, 0);
+    buildDatabase(ref_features,db);
+    ref_features.clear();
+    queryDatabase(query_basedir,db);
     return 0;
 }
 
@@ -91,7 +93,7 @@ void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int 
     //cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
     //char img_name[100];
     cout << "Extracting CNN features..." << endl;
-    std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(basedir.c_str(),".fv.mat");
+    std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(basedir.c_str(),".fv.mat",true);
     string path = "";
     features.reserve(feat_files.size());
     for(int i = 0; i < feat_files.size(); ++i)
@@ -126,13 +128,13 @@ void changeStructure(const vector<double> &plain, vector<vector<double> > &out,
 }
 
 // ----------------------------------------------------------------------------
-CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features,const string vocfilename)
+CnnVocabulary createVocab(const vector<vector<vector<double> > > &features,const string vocfilename,bool save_file)
 {
     // branching factor and depth levels
     const int k = 10;
     const int L = 6;
     const WeightingType weight = TF_IDF;
-    const ScoringType score = L2_NORM;
+    const ScoringType score = L1_NORM;
 
     CnnVocabulary voc(k, L, weight, score);
 
@@ -142,7 +144,13 @@ CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features,c
 
     cout << "Vocabulary information: " << endl
          << voc << endl << endl;
-
+    BowVector v1;
+//    for(int i=0;i<features.size();++i)
+//    {
+//        voc.transform(features[i], v1);
+//        v1.saveM("/home/develop/Work/Datasets/BOW/test.txt",voc.size());
+//        break;
+//    }
     // lets do something with this vocabulary
 //    cout << "Matching images against themselves (0 low, 1 high): " << endl;
 //    BowVector v1, v2;
@@ -158,9 +166,11 @@ CnnVocabulary testVocCreation(const vector<vector<vector<double> > > &features,c
 //        }
 //    }
 
+    if(save_file){
     // save the vocabulary to disk
     cout << endl << "Saving vocabulary in " << vocfilename<< endl;
     voc.saveToTextFile(vocfilename);
+    }
     cout << "Done" << endl;
     return voc;
 }
@@ -336,10 +346,12 @@ void buildVoc(const string vocFile)
 
     int n_ref_imgs = 4022,n_query_imgs = 3756;
     vector<vector<vector<double> > > ref_features,query_features,features;
-    loadFeatures("/home/develop/Work/Datasets/indoor/library/Vgg_LCF_conv3_pool",ref_features,n_ref_imgs);
-    features.insert(features.end(),ref_features.begin(),ref_features.end());
-    loadFeatures("/home/develop/Work/Datasets/indoor/bookstore/Vgg_LCF_conv3_pool",ref_features,n_ref_imgs);
-    features.insert(features.end(),ref_features.begin(),ref_features.end());
+//    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1/kp_features_th50",ref_features,200);
+//    features.insert(features.end(),ref_features.begin(),ref_features.end());
+//    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/day_right/Vgg_LCF_conv5_1/kp_features_th50",ref_features,200);
+//    features.insert(features.end(),ref_features.begin(),ref_features.end());
+//    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv5_1/kp_features_th50",ref_features,200);
+//    features.insert(features.end(),ref_features.begin(),ref_features.end());
     //loadFeatures(query_basedir,query_features,n_query_imgs);
     //features = ref_features;
     //features.insert(features.end(),query_features.begin(),query_features.end());
@@ -356,6 +368,61 @@ void buildVoc(const string vocFile)
 //    //features.insert(features.end(),ref_features.begin(),ref_features.end());
 //    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv3_3",ref_features,100);
 //    features.insert(features.end(),ref_features.begin(),ref_features.end());
+    loadFeatures("/home/develop/Work/Datasets/indoor/library/resnet_LCF_3b",features,n_ref_imgs);
    cout<<features.size()<<endl;
-    CnnVocabulary voc = testVocCreation(features,vocFile);
+    CnnVocabulary voc = createVocab(features,vocFile,true);
+}
+//...........................................................................
+void queryDatabase(string query_basedir,CnnDatabase& db)
+{
+    std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(query_basedir.c_str(),".fv.mat",true);
+    cout << "Querying the database: " << endl;
+    int rangeSz = 5;
+    QueryResults ret;
+    int tp = 0,fp=0,fn = 0;
+    int tp_best = 0,fp_best=0,fn_best = 0;
+    string path = "";
+    bool found,best_match_found;
+    for(int i = 0; i < feat_files.size(); ++i)
+    {
+        path = feat_files[i];
+        cout<<path<<endl;
+        vector<vector<double> > fv;
+        loadFeaturesFromMat(path.c_str(),fv);
+
+        if (fv.size() == 0)
+            continue;
+
+        db.query(fv, ret, 5);
+        cout << "Searching for Image " << i << ". " << ret << endl;
+        found = false;
+        best_match_found = false;
+        for(int n=0;n<ret.size();++n)
+        {
+            int entID = ret[n].Id;
+            if(i -rangeSz <= entID && entID <= i+rangeSz){
+                 ++ tp;
+                found = true;
+                if(n==0){
+                    best_match_found = true;
+                     ++ tp_best;
+                }
+                break;
+            }
+        }
+        if(!found){
+            ++ fp;
+            ++ fn;
+        }
+        if(!best_match_found){
+            ++ fp_best;
+            ++ fn_best;
+        }
+
+    }
+    float per_top_k = tp*100.0 / (fp + tp);
+    float per_top_1 = tp_best*100.0 / (fp_best + tp_best);
+    cout << endl;
+    cout<<"============================\n";
+    cout<<"Top K-Percision: "<<per_top_k<< " Top 1-Percision: "<<per_top_1<<endl;
 }

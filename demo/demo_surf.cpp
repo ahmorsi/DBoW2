@@ -63,9 +63,8 @@ int main()
 
   testVocCreation(ref_features);
 
-  wait();
+  //wait();
 
-  //testDatabase(features);
   buildDatabase(ref_features);
   queryDatabase(query_features);
   return 0;
@@ -120,8 +119,8 @@ void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
 void testVocCreation(const vector<vector<vector<float> > > &features)
 {
   // branching factor and depth levels 
-  const int k = 9;
-  const int L = 3;
+  const int k = 10;
+  const int L = 6;
   const WeightingType weight = TF_IDF;
   const ScoringType score = L1_NORM;
 
@@ -133,7 +132,13 @@ void testVocCreation(const vector<vector<vector<float> > > &features)
 
   cout << "Vocabulary information: " << endl
   << voc << endl << endl;
-
+  BowVector v1;
+  for(int i=0;i<features.size();++i)
+  {
+      voc.transform(features[i], v1);
+      v1.saveM("/home/develop/Work/Datasets/BOW/test_surf.txt",voc.size());
+      break;
+  }
 //  // lets do something with this vocabulary
 //  cout << "Matching images against themselves (0 low, 1 high): " << endl;
 //  BowVector v1, v2;
@@ -249,6 +254,8 @@ void queryDatabase(const vector<vector<vector<float> > > &features)
     int rangeSz = 5;
     QueryResults ret;
     int tp = 0,fp=0,fn = 0;
+    int tp_best = 0,fp_best=0,fn_best = 0;
+    bool found,best_match_found;
     for(int i = 0; i < NIMAGES; i++)
     {
         db.query(features[i], ret, 5);
@@ -257,14 +264,18 @@ void queryDatabase(const vector<vector<vector<float> > > &features)
         // database. ret[1] is the second best match.
 
         cout << "Searching for Image " << i << ". " << ret << endl;
-        //out << "Searching for Image " << i << ". " << ret << endl;
-        bool found = false;
+        found = false;
+        best_match_found = false;
         for(int n=0;n<ret.size();++n)
         {
             int entID = ret[n].Id;
             if(i -rangeSz <= entID && entID <= i+rangeSz){
                  ++ tp;
                 found = true;
+                if(n==0){
+                    best_match_found = true;
+                     ++ tp_best;
+                }
                 break;
             }
         }
@@ -272,10 +283,16 @@ void queryDatabase(const vector<vector<vector<float> > > &features)
             ++ fp;
             ++ fn;
         }
+        if(!best_match_found){
+            ++ fp_best;
+            ++ fn_best;
+        }
     }
 
+    float per_top_k = tp*100.0 / (fp + tp);
+    float per_top_1 = tp_best*100.0 / (fp_best + tp_best);
     cout << endl;
     cout<<"============================\n";
-    cout<<"Percision: "<<tp*100.0 / (fp + tp)<<endl;
+    cout<<"Top K-Percision: "<<per_top_k<< " Top 1-Percision: "<<per_top_1<<endl;
 
 }
