@@ -53,15 +53,25 @@ void wait()
 
 // ----------------------------------------------------------------------------
 
-int main()
+int main(int argc, char* argv[])
 {
+  cout<<"DBoW2 Demo for ORB Features\n";
   vector < vector<FORB::TDescriptor > > ref_features,query_features;
   string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right";
   string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right";
+
+  if (argc != 3)
+  {
+      printf("Usage: ./demo_orb <ref_folder> <query_folder>\n");
+      return -1;
+  }
+  ref_basedir = argv[1];
+  query_basedir = argv[2];
+
   loadFeatures(ref_basedir,ref_features);
   loadFeatures(query_basedir,query_features);
 
-  //testVocCreation(ref_features);
+  testVocCreation(ref_features);
 
   //wait();
 

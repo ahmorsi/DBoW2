@@ -30,7 +30,7 @@ using namespace std;
 void loadFeatures(string basedir,vector<vector<vector<float> > > &features);
 void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
   int L);
-void testVocCreation(const vector<vector<vector<float> > > &features);
+void testVocCreation(const vector<vector<vector<float> > > &features,bool save_file=true);
 void testDatabase(const vector<vector<vector<float> > > &features);
 void buildDatabase(const vector<vector<vector<float> > > &features);
 void queryDatabase(const vector<vector<vector<float> > > &features);
@@ -38,7 +38,7 @@ void queryDatabase(const vector<vector<vector<float> > > &features);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 // number of training images
-const int NIMAGES = 200;
+const int NIMAGES = 400;
 
 // extended surf gives 128-dimensional vectors
 const bool EXTENDED_SURF = false;
@@ -53,11 +53,19 @@ void wait()
 
 // ----------------------------------------------------------------------------
 
-int main()
+int main(int argc, char* argv[])
 {
   vector<vector<vector<float> > > ref_features,query_features;
   string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right";
   string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right";
+
+  if (argc != 3)
+  {
+      printf("Usage: ./demo_orb <ref_folder> <query_folder>\n");
+      return -1;
+  }
+  ref_basedir = argv[1];
+  query_basedir = argv[2];
   loadFeatures(ref_basedir,ref_features);
   loadFeatures(query_basedir,query_features);
 
@@ -80,7 +88,7 @@ void loadFeatures(string basedir,vector<vector<vector<float> > > &features)
   cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
   char img_name[100];
   cout << "Extracting SURF features..." << endl;
-  for(int i = 0; i < NIMAGES; ++i)
+  for(int i = 1; i <= NIMAGES; ++i)
   {
     stringstream ss;
     sprintf( img_name, "Image%03d.jpg", i );
@@ -116,7 +124,7 @@ void changeStructure(const vector<float> &plain, vector<vector<float> > &out,
 
 // ----------------------------------------------------------------------------
 
-void testVocCreation(const vector<vector<vector<float> > > &features)
+void testVocCreation(const vector<vector<vector<float> > > &features,bool save_file)
 {
   // branching factor and depth levels 
   const int k = 10;
@@ -154,9 +162,11 @@ void testVocCreation(const vector<vector<vector<float> > > &features)
 //    }
 //  }
 
+  if(save_file){
   // save the vocabulary to disk
   cout << endl << "Saving vocabulary..." << endl;
   voc.save("small_voc.yml.gz");
+  }
   cout << "Done" << endl;
 }
 

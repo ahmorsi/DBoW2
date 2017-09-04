@@ -28,7 +28,7 @@ using namespace std;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int NIMAGES);
+void loadFeatures(string basedir,vector<vector<vector<double> > > &features);
 void changeStructure(const vector<double> &plain, vector<vector<double> > &out,
                      int L);
 CnnVocabulary createVocab(const vector<vector<vector<double> > > &features,const string vocfilename,bool save_file=true);
@@ -56,19 +56,25 @@ void wait()
 
 // ----------------------------------------------------------------------------
 
-int main()
+int main(int argc, char* argv[])
 {
+    cout<<"DBoW2 Demo for CNN Features\n";
+
+    string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/siamese_resnet37_22_aug_tl";
+    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/siamese_resnet37_22_aug_tl";
+    if (argc != 3)
+    {
+        printf("Usage: ./demo <ref_folder> <query_folder>\n");
+        return -1;
+    }
     const string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
     //buildVoc(vocFile);
 
-        string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_left/densenet_LCF_concatenate_32";//"/home/develop/Work/Datasets/GardensPointWalking/day_left/Vgg_LCF_conv5_1";
-    string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/densenet_LCF_concatenate_32";
-
-    int n_ref_imgs = 200,n_query_imgs = 200;
+    ref_basedir = argv[1];
+    query_basedir = argv[2];
 
     vector<vector<vector<double> > > ref_features,query_features,features;
-    loadFeatures(ref_basedir,ref_features,n_ref_imgs);
-
+    loadFeatures(ref_basedir,ref_features);
 
     //CnnVocabulary voc;
     //cout<<"Loading Vocabulary ...\n";
@@ -85,13 +91,9 @@ int main()
 }
 
 // ----------------------------------------------------------------------------
-void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int NIMAGES)
+void loadFeatures(string basedir,vector<vector<vector<double> > > &features)
 {
     features.clear();
-
-
-    //cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(400, 4, 2, EXTENDED_SURF);
-    //char img_name[100];
     cout << "Extracting CNN features..." << endl;
     std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(basedir.c_str(),".fv.mat",true);
     string path = "";
@@ -99,11 +101,6 @@ void loadFeatures(string basedir,vector<vector<vector<double> > > &features,int 
     for(int i = 0; i < feat_files.size(); ++i)
     {
         path = feat_files[i];
-        stringstream ss;
-        //sprintf( img_name, "Image%03d", i );
-        //sprintf( img_name, "image-%05d", i );
-        //ss << basedir<< "/" << img_name << ".conv3.grp.fv.mat";
-        //ss << basedir<< "/" << img_name << ".conv5.fv.mat";
         cout<<path<<endl;
         vector<vector<double> > fv;
         loadFeaturesFromMat(path.c_str(),fv);
@@ -368,7 +365,7 @@ void buildVoc(const string vocFile)
 //    //features.insert(features.end(),ref_features.begin(),ref_features.end());
 //    loadFeatures("/home/develop/Work/Datasets/GardensPointWalking/night_right/Vgg_LCF_conv3_3",ref_features,100);
 //    features.insert(features.end(),ref_features.begin(),ref_features.end());
-    loadFeatures("/home/develop/Work/Datasets/indoor/library/resnet_LCF_3b",features,n_ref_imgs);
+    loadFeatures("/home/develop/Work/Datasets/indoor/library/resnet_LCF_3b",features);
    cout<<features.size()<<endl;
     CnnVocabulary voc = createVocab(features,vocFile,true);
 }
