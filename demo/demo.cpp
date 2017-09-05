@@ -10,6 +10,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <map>
 // DBoW2
 #include "DBoW2.h" // defines Surf64Vocabulary and Surf64Database
 
@@ -37,16 +38,11 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features);
 void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db);
 void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase& db,ofstream &out);
 void queryDatabase(string query_basedir,CnnDatabase& db);
+void queryDatabase(string query_basedir,CnnDatabase& db,map<int,int>& correspondances);
 void buildVoc(const string vocfilename);
+void read_correspondances(string frames_correspondances_file,map<int,int>& correspondances);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-// number of training images
-//const int NIMAGES = 4022;
-
-// extended surf gives 128-dimensional vectors
-const bool EXTENDED_SURF = false;
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 void wait()
 {
@@ -67,6 +63,7 @@ int main(int argc, char* argv[])
         printf("Usage: ./demo <ref_folder> <query_folder>\n");
         return -1;
     }
+
     const string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
     //buildVoc(vocFile);
 
@@ -86,7 +83,17 @@ int main(int argc, char* argv[])
     CnnDatabase db(voc, false, 0);
     buildDatabase(ref_features,db);
     ref_features.clear();
-    queryDatabase(query_basedir,db);
+     if(argc > 3)
+     {
+        map<int,int> correspondances;
+        string frames_correspondances_file = argv[3];
+        read_correspondances(frames_correspondances_file,correspondances);
+        queryDatabase(query_basedir,db,correspondances);
+     }
+     else
+     {
+        queryDatabase(query_basedir,db);
+     }
     return 0;
 }
 
@@ -275,6 +282,27 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features)
     }
     Mat_Close(mat);
 }
+//------------------------------------------------------------------------------
+void read_correspondances(string frames_correspondances_file,map<int,int>& correspondances)
+{
+    mat_t *mat = Mat_Open(frames_correspondances_file.c_str(),MAT_ACC_RDONLY);
+    if(mat){
+         matvar_t *matVar=0 ;
+        matVar = Mat_VarRead(mat,(char*)"fm");
+
+        if(matVar)
+        {
+             unsigned xSize = matVar->nbytes/matVar->data_size ;
+             const double *xData = static_cast<const double*>(matVar->data) ;
+             for(int i=0; i<xSize; i+=2)
+             {
+                 correspondances[xData[i]-1] = xData[i+1]-1;
+             }
+        }
+    }
+    Mat_Close(mat);
+}
+
 //-------------------------------------------------------------------------------
 void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db)
 {
@@ -398,6 +426,64 @@ void queryDatabase(string query_basedir,CnnDatabase& db)
         {
             int entID = ret[n].Id;
             if(i -rangeSz <= entID && entID <= i+rangeSz){
+                 ++ tp;
+                found = true;
+                if(n==0){
+                    best_match_found = true;
+                     ++ tp_best;
+                }
+                break;
+            }
+        }
+        if(!found){
+            ++ fp;
+            ++ fn;
+        }
+        if(!best_match_found){
+            ++ fp_best;
+            ++ fn_best;
+        }
+
+    }
+    float per_top_k = tp*100.0 / (fp + tp);
+    float per_top_1 = tp_best*100.0 / (fp_best + tp_best);
+    cout << endl;
+    cout<<"============================\n";
+    cout<<"Top K-Percision: "<<per_top_k<< " Top 1-Percision: "<<per_top_1<<endl;
+}
+//--------------------------------------------------------------------------------
+void queryDatabase(string query_basedir,CnnDatabase& db,map<int,int>& correspondances)
+{
+    std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(query_basedir.c_str(),".fv.mat",true);
+    cout << "Querying the database: " << endl;
+    int rangeSz = 5;
+    QueryResults ret;
+    int tp = 0,fp=0,fn = 0;
+    int tp_best = 0,fp_best=0,fn_best = 0;
+    string path = "";
+    bool found,best_match_found;
+    for(int i = 0; i < feat_files.size(); ++i)
+    {
+        path = feat_files[i];
+        cout<<path<<endl;
+        vector<vector<double> > fv;
+        loadFeaturesFromMat(path.c_str(),fv);
+
+        if (fv.size() == 0)
+            continue;
+
+        db.query(fv, ret, 5);
+        cout << "Searching for Image " << i << ". " << ret << endl;
+        if(correspondances.find(i) == correspondances.end())
+            continue;
+
+        int ground_truth = correspondances[i];
+        found = false;
+        best_match_found = false;
+        for(int n=0;n<ret.size();++n)
+        {
+            int entID = ret[n].Id;
+            if(ground_truth == entID){
                  ++ tp;
                 found = true;
                 if(n==0){
