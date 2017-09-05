@@ -476,7 +476,7 @@ void queryDatabase(string query_basedir,CnnDatabase& db,map<int,int>& correspond
         cout << "Searching for Image " << i << ". " << ret << endl;
         if(correspondances.find(i) == correspondances.end())
             continue;
-
+        cout << "Found Correspondances\n";
         int ground_truth = correspondances[i];
         found = false;
         best_match_found = false;
