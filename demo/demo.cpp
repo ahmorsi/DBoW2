@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 
     string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/siamese_resnet37_22_aug_tl";
     string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/siamese_resnet37_22_aug_tl";
-    if (argc != 3)
+    if (argc < 3)
     {
         printf("Usage: ./demo <ref_folder> <query_folder>\n");
         return -1;
