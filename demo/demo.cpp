@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_map>
 // DBoW2
 #include "DBoW2.h" // defines Surf64Vocabulary and Surf64Database
 
@@ -38,9 +39,9 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features);
 void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db);
 void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase& db,ofstream &out);
 void queryDatabase(string query_basedir,CnnDatabase& db);
-void queryDatabase(string query_basedir,CnnDatabase& db,map<int,int>& correspondances);
+void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& correspondances);
 void buildVoc(const string vocfilename);
-void read_correspondances(string frames_correspondances_file,map<int,int>& correspondances);
+void read_correspondances(string frames_correspondances_file,unordered_map<int,int>& correspondances);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
@@ -85,7 +86,8 @@ int main(int argc, char* argv[])
     ref_features.clear();
      if(argc > 3)
      {
-        map<int,int> correspondances;
+        //map<int,int> correspondances;
+        unordered_map<int,int> correspondances;
         string frames_correspondances_file = argv[3];
         read_correspondances(frames_correspondances_file,correspondances);
         queryDatabase(query_basedir,db,correspondances);
@@ -283,7 +285,7 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features)
     Mat_Close(mat);
 }
 //------------------------------------------------------------------------------
-void read_correspondances(string frames_correspondances_file,map<int,int>& correspondances)
+void read_correspondances(string frames_correspondances_file,unordered_map<int,int>& correspondances)
 {
     mat_t *mat = Mat_Open(frames_correspondances_file.c_str(),MAT_ACC_RDONLY);
     if(mat){
@@ -296,7 +298,7 @@ void read_correspondances(string frames_correspondances_file,map<int,int>& corre
              const double *xData = static_cast<const double*>(matVar->data) ;
              for(int i=0; i<xSize; i+=2)
              {
-                 correspondances[xData[i]-1] = xData[i+1]-1;
+                 correspondances.insert( {xData[i]-1,xData[i+1]-1});
              }
         }
     }
@@ -452,7 +454,7 @@ void queryDatabase(string query_basedir,CnnDatabase& db)
     cout<<"Top K-Percision: "<<per_top_k<< " Top 1-Percision: "<<per_top_1<<endl;
 }
 //--------------------------------------------------------------------------------
-void queryDatabase(string query_basedir,CnnDatabase& db,map<int,int>& correspondances)
+void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& correspondances)
 {
     std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(query_basedir.c_str(),".fv.mat",true);
     cout << "Querying the database: " << endl;
@@ -473,11 +475,11 @@ void queryDatabase(string query_basedir,CnnDatabase& db,map<int,int>& correspond
             continue;
 
         db.query(fv, ret, 5);
-        cout << "Searching for Image " << i << ". " << ret << endl;
         if(correspondances.find(i) == correspondances.end())
             continue;
-        cout << "Found Correspondances\n";
         int ground_truth = correspondances[i];
+        cout << "Searching for Image " << i << ". " << ret << endl;
+        cout << "Found Correspondances: "<<ground_truth<<"\n";
         found = false;
         best_match_found = false;
         for(int n=0;n<ret.size();++n)
