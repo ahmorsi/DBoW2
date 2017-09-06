@@ -464,11 +464,14 @@ void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& 
     int tp_best = 0,fp_best=0,fn_best = 0;
     string path = "";
     bool found,best_match_found;
+    vector<vector<double> > fv;
+    int ground_truth;
+    int entID;
     for(int i = 0; i < feat_files.size(); ++i)
     {
         path = feat_files[i];
         cout<<path<<endl;
-        vector<vector<double> > fv;
+        fv.clear();
         loadFeaturesFromMat(path.c_str(),fv);
 
         if (fv.size() == 0)
@@ -477,15 +480,15 @@ void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& 
         db.query(fv, ret, 5);
         if(correspondances.find(i) == correspondances.end())
             continue;
-        int ground_truth = correspondances[i];
+        ground_truth = correspondances[i];
         cout << "Searching for Image " << i << ". " << ret << endl;
         cout << "Found Correspondances: "<<ground_truth<<"\n";
         found = false;
         best_match_found = false;
         for(int n=0;n<ret.size();++n)
         {
-            int entID = ret[n].Id;
-            if(ground_truth == entID){
+            entID = ret[n].Id;
+            if(ground_truth -rangeSz <= entID && entID <= ground_truth+rangeSz){
                  ++ tp;
                 found = true;
                 if(n==0){
