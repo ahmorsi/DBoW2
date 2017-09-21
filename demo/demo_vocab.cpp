@@ -59,24 +59,24 @@ int main(int argc, char* argv[])
 
     string ref_basedir = "/home/develop/Work/Datasets/GardensPointWalking/day_right/siamese_resnet37_22_aug_tl";
     string query_basedir = "/home/develop/Work/Datasets/GardensPointWalking/night_right/siamese_resnet37_22_aug_tl";
+    string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
     if (argc < 4)
     {
         printf("Usage: ./demo <ref_folder> <query_folder> <VocFile>\n");
         return -1;
     }
 
-    const string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
+
     //buildVoc(vocFile);
 
     ref_basedir = argv[1];
     query_basedir = argv[2];
-    string vocFile = argv[3];
+    vocFile = argv[3];
     vector<vector<vector<double> > > ref_features,query_features,features;
     loadFeatures(ref_basedir,ref_features);
 
     CnnVocabulary voc;
     cout<<"Loading Vocabulary ...\n";
-    //CnnVocabulary voc = createVocab(ref_features,vocFile,false);
     voc.loadFromTextFile(vocFile);
     cout<<"Voc Info:\n";
     cout<<voc<<endl;
