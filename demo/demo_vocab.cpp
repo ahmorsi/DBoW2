@@ -62,11 +62,9 @@ int main(int argc, char* argv[])
     string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
     if (argc < 4)
     {
-        printf("Usage: ./demo <ref_folder> <query_folder> <VocFile>\n");
+        printf("Usage: ./demo_vocab <ref_folder> <query_folder> <VocFile>\n");
         return -1;
     }
-
-
     //buildVoc(vocFile);
 
     ref_basedir = argv[1];
