@@ -39,9 +39,9 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features);
 void buildDatabase(const vector<vector<vector<double> > > &features,CnnDatabase &db);
 void queryDatabase(const vector<vector<vector<double> > > &features,CnnDatabase& db,ofstream &out);
 void queryDatabase(string query_basedir,CnnDatabase& db);
-void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& correspondances);
+void queryDatabase(string query_basedir,CnnDatabase& db,map<int,vector<int> >& correspondances);
 void buildVoc(const string vocfilename);
-void read_correspondances(string frames_correspondances_file,unordered_map<int,int>& correspondances);
+void read_correspondances(string frames_correspondances_file,map<int,vector<int> >& correspondances);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
     string vocFile = "//home//develop//Work//Source_Code//DBoW2//library_resnet_voc_K10L6.txt";
     if (argc < 4)
     {
-        printf("Usage: ./demo_vocab <ref_folder> <query_folder> <VocFile>\n");
+        printf("Usage: ./demo_vocab <ref_folder> <query_folder> <VocFile> <correspondancesFile> \n");
         return -1;
     }
     //buildVoc(vocFile);
@@ -83,6 +83,19 @@ int main(int argc, char* argv[])
     buildDatabase(ref_features,db);
     ref_features.clear();
     queryDatabase(query_basedir,db);
+
+    if(argc > 4)
+    {
+       //map<int,int> correspondances;
+       map<int,vector<int> > correspondances;
+       string frames_correspondances_file = argv[4];
+       read_correspondances(frames_correspondances_file,correspondances);
+       queryDatabase(query_basedir,db,correspondances);
+    }
+    else
+    {
+       queryDatabase(query_basedir,db);
+    }
 
     return 0;
 }
@@ -273,24 +286,38 @@ void loadFeaturesFromMat(string filename,vector<vector<double> > &features)
     Mat_Close(mat);
 }
 //------------------------------------------------------------------------------
-void read_correspondances(string frames_correspondances_file,unordered_map<int,int>& correspondances)
+void read_correspondances(string frames_correspondances_file,map<int,vector<int> >& correspondances)
 {
-    mat_t *mat = Mat_Open(frames_correspondances_file.c_str(),MAT_ACC_RDONLY);
-    if(mat){
-         matvar_t *matVar=0 ;
-        matVar = Mat_VarRead(mat,(char*)"fm");
+//    mat_t *mat = Mat_Open(frames_correspondances_file.c_str(),MAT_ACC_RDONLY);
+//    if(mat){
+//         matvar_t *matVar=0 ;
+//        matVar = Mat_VarRead(mat,(char*)"fm");
 
-        if(matVar)
-        {
-             unsigned xSize = matVar->nbytes/matVar->data_size ;
-             const double *xData = static_cast<const double*>(matVar->data) ;
-             for(int i=0; i<xSize; i+=2)
-             {
-                 correspondances.insert( {xData[i]-1,xData[i+1]-1});
-             }
+//        if(matVar)
+//        {
+//             unsigned xSize = matVar->nbytes/matVar->data_size ;
+//             const double *xData = static_cast<const double*>(matVar->data) ;
+//             for(int i=0; i<xSize; i+=2)
+//             {
+//                 correspondances.insert( {xData[i]-1,xData[i+1]-1});
+//             }
+//        }
+//    }
+//    Mat_Close(mat);
+    std::ifstream infile(frames_correspondances_file);
+    std::string line;
+    int quId,numOfRefMatches,refId;
+    while (std::getline(infile, line))
+    {
+        std::istringstream iss(line);
+        iss >> quId >> numOfRefMatches;
+        vector<int> ref_ids;
+        while(numOfRefMatches--){
+            iss >> refId;
+            ref_ids.push_back(refId);
         }
+        correspondances[quId] = ref_ids;
     }
-    Mat_Close(mat);
 }
 
 //-------------------------------------------------------------------------------
@@ -442,7 +469,7 @@ void queryDatabase(string query_basedir,CnnDatabase& db)
     cout<<"Top K-Percision: "<<per_top_k<< " Top 1-Percision: "<<per_top_1<<endl;
 }
 //--------------------------------------------------------------------------------
-void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& correspondances)
+void queryDatabase(string query_basedir,CnnDatabase& db,map<int,vector<int> >& correspondances)
 {
     std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(query_basedir.c_str(),".fv.mat",true);
     cout << "Querying the database: " << endl;
@@ -453,7 +480,7 @@ void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& 
     string path = "";
     bool found,best_match_found;
     vector<vector<double> > fv;
-    int ground_truth;
+    vector<int> ground_truth;
     int entID;
     for(int i = 0; i < feat_files.size(); ++i)
     {
@@ -470,21 +497,26 @@ void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& 
             continue;
         ground_truth = correspondances[i];
         cout << "Searching for Image " << i << ". " << ret << endl;
-        cout << "Found Correspondances: "<<ground_truth<<"\n";
+        //cout << "Found Correspondances: "<<ground_truth<<"\n";
         found = false;
         best_match_found = false;
         for(int n=0;n<ret.size();++n)
         {
-            entID = ret[n].Id;
-            if(ground_truth -rangeSz <= entID && entID <= ground_truth+rangeSz){
-                 ++ tp;
-                found = true;
-                if(n==0){
-                    best_match_found = true;
-                     ++ tp_best;
-                }
-                break;
+            int entID = ret[n].Id;
+            //if(i -rangeSz <= entID && entID <= i+rangeSz){
+            for(int idx=0;idx<ground_truth.size();++idx){
+                if(ground_truth[idx] -rangeSz <= entID && entID <= ground_truth[idx]+rangeSz){
+                    ++ tp;
+                    found = true;
+                    if(n==0){
+                        best_match_found = true;
+                        ++ tp_best;
+                    }
+                    break;
+                 }
             }
+            if(found)
+                break;
         }
         if(!found){
             ++ fp;
@@ -502,4 +534,3 @@ void queryDatabase(string query_basedir,CnnDatabase& db,unordered_map<int,int>& 
     cout<<"============================\n";
     cout<<"Top K-Percision: "<<per_top_k<< " Top 1-Percision: "<<per_top_1<<endl;
 }
-

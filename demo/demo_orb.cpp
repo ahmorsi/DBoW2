@@ -30,9 +30,9 @@ using namespace std;
 
 void loadFeatures(string basedir,vector<vector<FORB::TDescriptor> > &features);
 void changeStructure(const cv::Mat &plain, vector<FORB::TDescriptor> &out);
-void testVocCreation(const vector < vector<FORB::TDescriptor> > &features);
+void testVocCreation(const vector < vector<FORB::TDescriptor> > &features,bool save_file=true);
 void testDatabase(const vector < vector<FORB::TDescriptor> > &features);
-void buildDatabase(const vector < vector<FORB::TDescriptor> > &features);
+void buildDatabase(const vector < vector<FORB::TDescriptor> > &features,bool save_file=true);
 void queryDatabase(const vector < vector<FORB::TDescriptor> > &features);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -85,28 +85,45 @@ int main(int argc, char* argv[])
 void loadFeatures(string basedir,vector < vector<FORB::TDescriptor> > &features)
 {
   features.clear();
-  features.reserve(NIMAGES);
   //cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
   ORB_SLAM2::ORBextractor orb_extractor(1000,1.2,8,20,7);
-  char img_name[100];
-  cout << "Extracting ORB features..." << endl;
-  for(int i = 0; i < NIMAGES; ++i)
-  {
-    stringstream ss;
-    sprintf( img_name, "Image%03d.jpg", i );
-    //ss << "images/image" << i << ".png";
-    ss << basedir<< "/" << img_name;
-    cout << ss.str()<<endl;
-    cv::Mat image = cv::imread(ss.str(), 0);
-    cv::Mat mask;
-    vector<cv::KeyPoint> keypoints;
-    cv::Mat descriptors;
-    //vector<FORB::TDescriptor> descriptors;
-    orb_extractor(image,mask,keypoints,descriptors);
-    //orb->detectAndCompute(image, mask, keypoints, descriptors);
+  //char img_name[100];
+//  cout << "Extracting ORB features..." << endl;
+//  for(int i = 0; i < NIMAGES; ++i)
+//  {
+//    stringstream ss;
+//    sprintf( img_name, "Image%03d.jpg", i );
+//    //ss << "images/image" << i << ".png";
+//    ss << basedir<< "/" << img_name;
+//    cout << ss.str()<<endl;
+//    cv::Mat image = cv::imread(ss.str(), 0);
+//    cv::Mat mask;
+//    vector<cv::KeyPoint> keypoints;
+//    cv::Mat descriptors;
+//    //vector<FORB::TDescriptor> descriptors;
+//    orb_extractor(image,mask,keypoints,descriptors);
+//    //orb->detectAndCompute(image, mask, keypoints, descriptors);
 
-    features.push_back(vector<cv::Mat >());
-    changeStructure(descriptors, features.back());
+//    features.push_back(vector<cv::Mat >());
+//    changeStructure(descriptors, features.back());
+//  }
+  std::vector<std::string> feat_files = DUtils::FileFunctions::Dir(basedir.c_str(),".jpg",true);
+  string path = "";
+  features.reserve(feat_files.size());
+  for(int i = 0; i < feat_files.size(); ++i)
+  {
+      path = feat_files[i];
+      cout<<path<<endl;
+      cv::Mat image = cv::imread(path, 0);
+      cv::Mat mask;
+      vector<cv::KeyPoint> keypoints;
+      cv::Mat descriptors;
+      //vector<FORB::TDescriptor> descriptors;
+      orb_extractor(image,mask,keypoints,descriptors);
+      //orb->detectAndCompute(image, mask, keypoints, descriptors);
+
+      features.push_back(vector<cv::Mat >());
+      changeStructure(descriptors, features.back());
   }
 }
 // ----------------------------------------------------------------------------
@@ -122,7 +139,7 @@ void changeStructure(const cv::Mat &plain, vector<FORB::TDescriptor> &out)
 }
 // ----------------------------------------------------------------------------
 
-void testVocCreation(const vector< vector< FORB::TDescriptor > > &features)
+void testVocCreation(const vector< vector< FORB::TDescriptor > > &features,bool save_file)
 {
   // branching factor and depth levels
   const int k = 10;
@@ -154,8 +171,10 @@ void testVocCreation(const vector< vector< FORB::TDescriptor > > &features)
 //  }
 
   // save the vocabulary to disk
+  if(save_file){
   cout << endl << "Saving vocabulary..." << endl;
   voc.save("small_orb_voc.yml.gz");
+  }
   cout << "Done" << endl;
 }
 
@@ -214,15 +233,15 @@ void testDatabase(const vector < vector<FORB::TDescriptor> > &features)
 
 // ----------------------------------------------------------------------------
 
-void buildDatabase(const vector < vector<FORB::TDescriptor> > &features)
+void buildDatabase(const vector < vector<FORB::TDescriptor> > &features,bool save_file)
 {
     cout << "Creating a small database..." << endl;
 
     // load the vocabulary from disk
-    //OrbVocabulary voc("small_orb_voc.yml.gz");
+    OrbVocabulary voc("small_orb_voc.yml.gz");
 
-    OrbVocabulary voc;
-    voc.loadFromTextFile("/home/develop/Work/Source_Code/ORB_SLAM2/Vocabulary/ORBvoc.txt");
+    //OrbVocabulary voc;
+    //voc.loadFromTextFile("/home/develop/Work/Source_Code/ORB_SLAM2/Vocabulary/ORBvoc.txt");
     cout << "Vocabulary information: " << endl
     << voc << endl << endl;
     OrbDatabase db(voc, false, 0); // false = do not use direct index
@@ -243,8 +262,10 @@ void buildDatabase(const vector < vector<FORB::TDescriptor> > &features)
 
     // we can save the database. The created file includes the vocabulary
     // and the entries added
+    if(save_file){
     cout << "Saving database..." << endl;
     db.save("small_orb_db.yml.gz");
+    }
     cout << "... done!" << endl;
 }
 //--------------------------------------------------------------------------
