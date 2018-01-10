@@ -11,6 +11,7 @@
 #define __D_T_QUERY_RESULTS__
 
 #include <vector>
+#include <cmath>
 
 namespace DBoW2 {
 
@@ -174,6 +175,8 @@ public:
    */
   inline void scaleScores(double factor);
   
+  inline void minmaxScale();
+  inline void stdScale();
   /**
    * Prints a string version of the results
    * @param os ostream
@@ -198,6 +201,32 @@ inline void QueryResults::scaleScores(double factor)
 }
 
 // --------------------------------------------------------------------------
+
+inline void minmaxScale()
+{
+    double min_score=INT_MAX,max_score=0;
+    for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
+    {
+        min_score = std::min(min_score,qit->Score);
+        max_score = std::max(qit->Score,qit->Score);
+    }
+    for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
+        qit->Score = (qit->Score-min_score)/max_score;
+}
+
+// --------------------------------------------------------------------------
+inline void stdScale()
+{
+    double mean = 0,sd=0;
+    for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
+        mean += qit->Score;
+    mean /= this->size();
+    for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
+        sd += (qit->Score-mean)*(qit->Score-mean);
+    sd = std::sqrt(sd/this->size());
+    for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
+        qit->Score = (qit->Score-mean)/sd;
+}
 
 } // namespace TemplatedBoW
   
