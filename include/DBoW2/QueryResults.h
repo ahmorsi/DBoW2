@@ -204,7 +204,7 @@ inline void QueryResults::scaleScores(double factor)
 
 inline void QueryResults::minmaxScale()
 {
-    double min_score=INT_MAX,max_score=0;
+    double min_score=10000,max_score=0;
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
     {
         min_score = std::min(min_score,qit->Score);
