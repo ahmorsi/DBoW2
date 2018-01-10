@@ -211,7 +211,7 @@ inline void QueryResults::minmaxScale(double max_value,double min_value)
         max_score = std::max(qit->Score,qit->Score);
     }
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit){
-        qit->Score = (qit->Score-min_score)/max_score;
+        qit->Score = (qit->Score-min_score)/(max_score-min_score);
         qit->Score = qit->Score*(max_value-min_value) + min_value;
     }
 }
