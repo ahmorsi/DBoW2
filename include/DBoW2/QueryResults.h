@@ -175,7 +175,7 @@ public:
    */
   inline void scaleScores(double factor);
   
-  inline void minmaxScale();
+  inline void minmaxScale(double max_value=1.0,double min_value=0.0);
   inline void stdScale();
   /**
    * Prints a string version of the results
@@ -202,7 +202,7 @@ inline void QueryResults::scaleScores(double factor)
 
 // --------------------------------------------------------------------------
 
-inline void QueryResults::minmaxScale()
+inline void QueryResults::minmaxScale(double max_value,double min_value)
 {
     double min_score=10000,max_score=0;
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
@@ -210,8 +210,10 @@ inline void QueryResults::minmaxScale()
         min_score = std::min(min_score,qit->Score);
         max_score = std::max(qit->Score,qit->Score);
     }
-    for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
+    for(QueryResults::iterator qit = begin(); qit != end(); ++qit){
         qit->Score = (qit->Score-min_score)/max_score;
+        qit->Score = qit->Score*(max_value-min_value) + min_value;
+    }
 }
 
 // --------------------------------------------------------------------------
