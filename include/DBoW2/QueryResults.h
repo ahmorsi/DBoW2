@@ -202,7 +202,7 @@ inline void QueryResults::scaleScores(double factor)
 
 // --------------------------------------------------------------------------
 
-inline void minmaxScale()
+inline void QueryResults::minmaxScale()
 {
     double min_score=INT_MAX,max_score=0;
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
@@ -215,15 +215,15 @@ inline void minmaxScale()
 }
 
 // --------------------------------------------------------------------------
-inline void stdScale()
+inline void QueryResults::stdScale()
 {
     double mean = 0,sd=0;
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
         mean += qit->Score;
-    mean /= this->size();
+    mean /= size();
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
         sd += (qit->Score-mean)*(qit->Score-mean);
-    sd = std::sqrt(sd/this->size());
+    sd = std::sqrt(sd/size());
     for(QueryResults::iterator qit = begin(); qit != end(); ++qit)
         qit->Score = (qit->Score-mean)/sd;
 }
